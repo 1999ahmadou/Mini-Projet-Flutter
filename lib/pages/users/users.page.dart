@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:github_mobile_app/pages/repos/home.page.dart';
 import 'package:http/http.dart' as http; // dependence pour envoyer les requettes
 
 class UsersPage extends StatefulWidget {
@@ -116,11 +117,19 @@ class _UsersPageState extends State<UsersPage> {
               ],
             ),
             Expanded(
-              child: ListView.builder( //permet de faire une boucle et d'afficher les elements
+              child: ListView.separated( //permet de faire une boucle et d'afficher les elements
+                separatorBuilder: (context,index)=>Divider(height: 2, color: Colors.deepOrange,),
                 controller: scrollController,
                 itemCount: items.length,  //(data==null)?0: data['items'].length,  // nombre d'element dans la liste
                   itemBuilder: (context,index){
                     return ListTile(  // Element de la liste
+                      onTap: (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context)=>GitRepositorisPage(
+                          login: items[index]['login'],
+                          avatarUrl: items[index]['avatar_url'],
+                          langage: items[index]['language'],
+                        )));
+                      },
                       title: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
