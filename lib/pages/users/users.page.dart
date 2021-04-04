@@ -13,13 +13,25 @@ class _UsersPageState extends State<UsersPage> {
   bool notVisible=false;
   TextEditingController queryTextEditingController=new TextEditingController();
   dynamic data; // pour stocker les données au format json
+  int currentPage=0;
+  int totalPages=0;
+  int pageSize=20;
+  List<dynamic> items=[];
+  ScrollController scrollController=new ScrollController(); //Pour controller le scrolling d'une page
 
   void _search(String query) { //envoie une requette http vers la partie back-end (api de github) et on récupére les données
     //String url="https://api.github.com/search/users?q=${query}&per_page=20&page=0";
-    http.get(Uri.parse('https://api.github.com/search/users?q=${query}&per_page=20&page=0'))
+    http.get(Uri.parse('https://api.github.com/search/users?q=${query}&per_page=$pageSize&page=$currentPage'))
         .then((response){
           setState(() {
-            this.data=json.decode(response.body);
+            data=json.decode(response.body);
+             this.items.addAll(data['items']); // on stock les données dans la liste pour pouvoir les retrouvées quant on remonte le scrolling
+            if(data['total_count'] % pageSize ==0){
+              totalPages=data['total_count']~/pageSize;  //division entiére
+            }
+            else{
+              totalPages=(data['total_count']/pageSize).floor() +1;
+            }
           });
     })
         .catchError((err){
@@ -27,11 +39,30 @@ class _UsersPageState extends State<UsersPage> {
     });
   }
 
+  //cette methode s'exécute avant la methode builder, juste aprés l'instanciation du state
+  //Utilisé pour initialiser les données
+  //Elle s'execute une seule fois
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    scrollController.addListener(() {
+      if(scrollController.position.pixels==scrollController.position.maxScrollExtent){
+        setState(() {
+          if(currentPage<totalPages-1){
+            ++currentPage;
+            _search(query);
+          }
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("User : ${query}"),
+        title: Text("${query} . Pages : $currentPage sur $totalPages"),
       ),
       body: Center(
         child: Column(
@@ -74,6 +105,10 @@ class _UsersPageState extends State<UsersPage> {
                 ),
                 IconButton(icon: Icon(Icons.search,color: Colors.deepOrange,),onPressed: (){
                   setState(() {
+                    //Nouvelle recherche
+                    items=[];
+                    currentPage=0;
+
                     this.query=queryTextEditingController.text; // récuperation du text qui à été saisit
                     _search(query);
                   });
@@ -82,7 +117,8 @@ class _UsersPageState extends State<UsersPage> {
             ),
             Expanded(
               child: ListView.builder( //permet de faire une boucle et d'afficher les elements
-                itemCount:(data==null)?0: data['items'].length,  // nombre d'element dans la liste
+                controller: scrollController,
+                itemCount: items.length,  //(data==null)?0: data['items'].length,  // nombre d'element dans la liste
                   itemBuilder: (context,index){
                     return ListTile(  // Element de la liste
                       title: Row(
@@ -91,15 +127,15 @@ class _UsersPageState extends State<UsersPage> {
                           Row(
                             children: [
                               CircleAvatar(
-                                backgroundImage: NetworkImage(data['items'][index]['avatar_url']),
+                                backgroundImage: NetworkImage(items[index]['avatar_url']), //NetworkImage(data['items'][index]['avatar_url']),
                                 radius: 40,
                               ),
                               SizedBox(width: 20,),
-                              Text("${data['items'][index]['login']}"),
+                              Text("${items[index]['login']}"),
                             ],
                           ),
                           CircleAvatar(
-                            child: Text("${data['items'][index]['score']}"),
+                            child: Text("${items[index]['score']}"),
                           )
                         ],
                       ),
