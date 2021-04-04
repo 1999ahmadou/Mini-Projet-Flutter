@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:github_mobile_app/pages/home/home.page.dart';
+import 'package:github_mobile_app/pages/users/users.page.dart';
 
 void main()=>runApp(MyApp());
 
@@ -6,22 +8,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: HomePage(),
-    );
-  }
-}
-
-class HomePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Home"),
+      theme: ThemeData(
+        primarySwatch: Colors.deepOrange
       ),
-      drawer: Drawer(),
-      body: Center(
-        child: Text("home"),
-      ),
+      routes: {
+        "/":(context)=>HomePage(),
+        "/users":(context)=>UsersPage()
+      },
+      initialRoute:"/users" ,
     );
   }
 }
